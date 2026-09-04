@@ -8,17 +8,45 @@ All commands are executed from the **project root**.
 
 ## 1. Requirements
 
-Core project requirements:
+### 1.1 Docker + Docker Compose
 
-* Docker + Docker Compose  
-* `.env` file in the project root  
-* `variables.json` in `airflow/include/`  
+Docker must be usable **without sudo**.
 
-Optional requirements for Streamlit UI and ETL tests:
+Add your user to the docker group:
+```bash
+sudo usermod -aG docker $USER
+```
 
-* Python 3.10+  
-* `pip install -r requirements.txt`
+Apply the new group (logout/login or):
+```bash
+newgrp docker
+```
 
+Verify Docker works:
+```bash
+docker ps
+```
+
+### 1.2 Environment file
+
+A `.env` file must exist in the project root.
+
+See section **Configuration** below.
+
+### 1.3 Airflow variables file
+
+A `variables.json` file must exist in `airflow/include/`.  
+
+See section **Configuration** below.
+
+### 1.4 Python (optional)
+
+Python 3.10+ is required only for Streamlit UI and local ETL tests.
+
+Install Python dependencies:
+```bash
+pip install -r requirements.txt
+```
 ---
 
 ## 2. Configuration
@@ -48,7 +76,7 @@ CLOUD_EMAIL_SENDER_ADDRESS
 CLOUD_EMAIL_API_KEY
 ```
 
-#### Local email (MailHog)
+#### 2.1.1 Local email (MailHog)
 
 If you set:
 
@@ -63,7 +91,7 @@ MailHog web UI:
 http://localhost:8025
 ```
 
-#### Cloud email (Mailgun, adaptable to other providers)
+#### 2.1.2 Cloud email (Mailgun, adaptable to other providers)
 
 If you set:
 

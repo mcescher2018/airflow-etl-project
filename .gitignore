@@ -17,7 +17,7 @@ airflow/logs/
 airflow/dags_dev/
 
 # Configuration files with private values
-include/variables.json
+variables.json
 .env
 
 # Airflow local data (staging CSV, DuckDB, temp files)
