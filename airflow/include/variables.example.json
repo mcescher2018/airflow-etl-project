@@ -1,0 +1,13 @@
+{
+  "etl_owner": "your_owner_name",
+  "etl_alert_email": "recipient@example.com",
+  "etl_alert_ok_subject": "ETL Weather - Successful run",
+  "etl_alert_ko_subject": "ETL Weather - Error alert",
+  "etl_alert_template_ok_path": "/opt/airflow/include/alert_template_ok.html",
+  "etl_alert_template_ko_path": "/opt/airflow/include/alert_template_ko.html",
+  "weather_db_path": "/opt/airflow/data/weather.duckdb",
+  "weather_csv_path": "/opt/airflow/data/weather_staging.csv",
+  "weather_api_url" : "https://api.open-meteo.com/v1/forecast",
+  "latitude" : 45.00,
+  "longitude" : 11.00
+}

@@ -1,0 +1,36 @@
+# Python cache
+__pycache__/
+.pytest_cache/
+*.pyc
+*.pyo
+*.pyd
+
+# Demo and sample files (different from sample_extract_output.json)
+demo*.*
+sample*.*
+!sample_extract_output.json
+
+# Airflow logs
+airflow/logs/
+
+# Airflow dags_dev
+airflow/dags_dev/
+
+# Configuration files with private values
+include/variables.json
+.env
+
+# Airflow local data (staging CSV, DuckDB, temp files)
+airflow/data/*.csv
+airflow/data/*.duckdb
+
+# Docker artifacts
+*.pid
+*.log
+
+# VSCode / IDE
+.vscode/
+.idea/
+
+# MacOS
+.DS_Store
