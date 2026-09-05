@@ -57,13 +57,11 @@ This means that Airflow’s timestamps appear two hours behind local Italian tim
 
 All comments and interpretations in the following subsections refer to local server time unless explicitly stated otherwise.
 
-Another important note: the ETL does not preserve historical snapshots.  
+Another important note.
 
-Each run updates all records within the fixed 192‑hour API window and inserts only the new future records that enter the window.  
+The ETL does not preserve historical snapshots and each run inserts new values if necessary and updates values falling in the 168-hour API window.
 
-As a result, the database always contains a single moving 192‑hour window, and each `time` value is unique.  
-
-Therefore, `time` can safely serve as the primary key.
+As a result, `time` is unique and can safely serve as the primary key.
 
 ## 3.1 DAG Exists in UI
 
@@ -79,9 +77,9 @@ Therefore, `time` can safely serve as the primary key.
 
 For the chosen example, this is the tasks results summary:
 
-![Tasks Runs](../../screenshots/observability_testing/weather_etl_dag/04_weather_etl_single_run_tasks.png)
+![Tasks Runs](../../screenshots/observability_testing/weather_etl_dag/04a_weather_etl_single_run_tasks.png)
 
-The `send_alert_email_ko_task` is skipped because all upstream tasks completed successfully.
+The `send_alert_email_ko_task` is skipped because all upstream tasks completed successfully (`trigger_rule`="all_success" in `send_alert_email_ok_task` vs "one_failed" in the complementary ko task).
 
 The detailed log of each task is shown in the subsections below.
 
@@ -101,22 +99,27 @@ The detailed log of each task is shown in the subsections below.
 
 ![Load](../../screenshots/observability_testing/weather_etl_dag/08_weather_etl_single_run_task_load.png)
 
-### 3.3.5 Branch
-
-![Branch](../../screenshots/observability_testing/weather_etl_dag/09_weather_etl_single_run_task_branch.png)
-
-### 3.3.6 Send Email
+### 3.3.5 Send Email
 
 ![Send Mail](../../screenshots/observability_testing/weather_etl_dag/10_weather_etl_single_run_task_send_ok.png)
 
-In this run the local email sender was used, allowing the mail preview to be displayed in the MailHog web UI:
+### 3.3.6 MailHog Dashboard
+
+In the project configuration the local email sender was used.
+
+Here is the MailHog Inbox, with highlited the mail sent in this run:
+
+![MailHog UI](../../screenshots/observability_testing/weather_etl_dag/11_weather_etl_single_run_task_mailhog_all_mails.png)
+
+This is the corresponding mail body:
 
 ![MailHog UI](../../screenshots/observability_testing/weather_etl_dag/12_weather_etl_single_run_task_mailhog_ui.png)
 
 ## 3.4 (Streamlit) Data Online View
 
-The API always returns 24 hourly records for the current day plus a 7‑day hourly forecast.  
-Past hours of the current day are included, so each ETL run processes a fixed 192‑hour window.
+The API always returns a 7‑day hourly forecast, starting from the 00:00 of the current day.
+
+As a result, past hours of the first day are included and each job run always processes a fixed window of 168 (24*7) input rows.
 
 ### 3.4.1 Online Data Part 1
 
@@ -132,37 +135,31 @@ Past hours of the current day are included, so each ETL run processes a fixed 19
 
 ![CSV Last Update](../../screenshots/observability_testing/weather_etl_dag/15_weather_etl_data_inspection_csv_last_update.png)
 
-This report was written on 03/09/2026 at 11:30 (Italian time).  
+This report was written on 05/09/2026 at 10:30 (Italian time).  
 
-The latest update of the data files is 11:00, as expected, based on the scheduling configuration (runs every 3 hours starting at 00:00 server time, displayed in UTC in the Airflow UI).
+The latest update of the data files is at 08:00 (06:00 server time), as expected, based on the scheduling configuration (runs every 3 hours starting at 00:00 server time, displayed in UTC in the Airflow UI).
 
 ### 3.5.2 CSV Content
 
 ![CSV Content](../../screenshots/observability_testing/weather_etl_dag/16_weather_etl_data_inspection_csv_content.png)
 
-The CSV contains data from 03/09/2026 at 00:00 through 09/09/2026 at 23:00, representing the full 7‑day hourly forecast window returned by the API.
+The CSV contains data from 05/09/2026 at 00:00 through 11/09/2026 at 23:00, representing the full 7‑day hourly forecast window returned by the API.
 
 ## 3.6 SQL Direct Inspection
 
-### 3.6.1 Records Created Today
+### 3.6.1 Staging Table Content
 
-![Records Created Today](../../screenshots/observability_testing/weather_etl_dag/18_weather_etl_data_inspection_sql_created_today.png)
+![Staging Table Content](../../screenshots/observability_testing/weather_etl_dag/17_weather_etl_data_inspection_staging_table.png)
 
-Records for 02/09/2026 were updated during the last run of that day (23:00 Italian time, 21:00 server time, displayed as UTC in Airflow).  
-
-Records for 03/09/2026 follow the same pattern, with the latest modification at 09:00 (Italian time).
+Staging table records correspond to the CSV content, having 24 rows per each day and consisting in 168 rows.
 
 ### 3.6.2 Records Newly Created
 
 ![Records Newly Created](../../screenshots/observability_testing/weather_etl_dag/19_weather_etl_data_inspection_sql_newly_created.png)
 
-The absence of records where `creation_date = modified_date` is expected.  
+As expected, we have 24 new records and no record with  `creation_date = modified_date`.  
 
 The initial load sets both timestamps, but all subsequent ETL runs update the data and therefore modify the `modified_date` field.
-
-### 3.6.3 Select All
-
-![Select All](../../screenshots/observability_testing/weather_etl_dag/20_weather_etl_data_inspection_sql_select_all.png)
 
 ## 3.7 (Streamlit) Data Dashboard
 
@@ -176,21 +173,21 @@ The initial load sets both timestamps, but all subsequent ETL runs update the da
 
 No anomalies detected:
 
-* `time` is the primary key, as the ETL maintains a single moving 192‑hour window and updates existing timestamps rather than preserving historical snapshots.  
+* `time` is the primary key, as the ETL maintains a single moving 168‑hour window and updates existing timestamps rather than preserving historical snapshots.  
 * Impossible values are defined as `temperature_2m` outside the interval (‑80, +80) or `precipitation` outside (0, 500), since extreme precipitation events can reach values around 100 mm/h.
 
 ### 3.7.3
 
 ![Data Dashboard Part 3](../../screenshots/observability_testing/weather_etl_dag/23_weather_etl_dashboard_part3.png)
 
-Updated records are those where `modified_date > creation_date`, and there are 192 of them, as expected.
+Updated records are those where `modified_date > creation_date`, and there are 192 of them as expected.
 
 They include:
-* Yesterday’s values, inserted earlier and updated during the last daily run (23:00 Italian time, 21:00 server time), totaling 168 records.  
-* Today’s values (24 records), created during the first daily run (02:00 Italian time, 00:00 server time) and updated by subsequent runs.
 
-There are 24 records created today because the rolling window advances from the previous day to the current one, introducing a new day (09/09/2026) with hourly detail.
+* Yesterday’s unchanged values, inserted earlier and updated during the last daily run (23:00 Italian time, 21:00 server time), totaling 24 records.
+* Yesterday’s updated values, inserted yesterday and updated during today's run, totaling 144 records.    
+* Today’s new values (24 records), created during the first daily run (02:00 Italian time, 00:00 server time) and updated by subsequent runs.
 
 ## 4 Conclusions
 
-All observability checks confirm that the ETL pipeline runs reliably, updates data consistently within the 192‑hour window, and that the Airflow environment is correctly configured for scheduling, branching, logging, and notifications.
+All observability checks confirm that the ETL pipeline runs reliably, load and updates data consistently within the 168‑hour window, and that the Airflow environment is correctly configured for scheduling, branching, logging, and notifications.

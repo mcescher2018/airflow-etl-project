@@ -20,7 +20,6 @@ def preview_table(con, table_name, limit=5):
 
     print(df_preview.to_string(index=False))
 
-
 def load(csv_path, db_path):
     """
     Load the CSV into DuckDB using a proper UPSERT strategy with MERGE.
@@ -58,73 +57,83 @@ def load(csv_path, db_path):
         print(f"[ERROR] {msg}. Available columns: {list(df.columns)}")
         raise ValueError(msg)
 
-    # Connect to DuckDB
+    con = None
     try:
+        # Connect to DuckDB
         con = duckdb.connect(db_path)
+
+        # Final table with audit fields
+        con.execute("""
+            CREATE TABLE IF NOT EXISTS weather_data (
+                time TIMESTAMP PRIMARY KEY,
+                temperature_2m DOUBLE,
+                precipitation DOUBLE,
+                creation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                modified_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+
+        # Staging table (no audit fields)
+        con.execute("""
+            CREATE TABLE IF NOT EXISTS weather_staging (
+                time TIMESTAMP,
+                temperature_2m DOUBLE,
+                precipitation DOUBLE
+            );
+        """)
+
+        # Clear staging
+        con.execute("DELETE FROM weather_staging;")
+
+        # Load CSV into staging
+        con.execute(f"""
+            INSERT INTO weather_staging
+            SELECT * FROM read_csv_auto('{csv_path}');
+        """)
+
+        # MERGE = real UPSERT
+        con.execute("""
+            MERGE INTO weather_data AS target
+            USING weather_staging AS source
+            ON target.time = source.time
+
+            WHEN MATCHED THEN
+                UPDATE SET
+                    temperature_2m = source.temperature_2m,
+                    precipitation = source.precipitation,
+                    modified_date = CURRENT_TIMESTAMP
+
+            WHEN NOT MATCHED THEN
+                INSERT (time, temperature_2m, precipitation, creation_date, modified_date)
+                VALUES (
+                    source.time,
+                    source.temperature_2m,
+                    source.precipitation,
+                    CURRENT_TIMESTAMP,
+                    CURRENT_TIMESTAMP
+                );
+        """)
+
+        print(f"UPSERT completed with MERGE. Database updated at: {db_path}")
+
+        preview_table(con, "weather_staging")
+        preview_table(con, "weather_data")
+
+        return db_path
+
     except Exception as e:
+
         msg = f"Failed to connect to DuckDB at '{db_path}': {e}"
         print(f"[ERROR] {msg}")
+
         raise ValueError(msg)
+    
+    finally:
 
-    # Final table with audit fields
-    con.execute("""
-        CREATE TABLE IF NOT EXISTS weather_data (
-            time TIMESTAMP PRIMARY KEY,
-            temperature_2m DOUBLE,
-            precipitation DOUBLE,
-            creation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            modified_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-    """)
-
-    # Staging table (no audit fields)
-    con.execute("""
-        CREATE TABLE IF NOT EXISTS weather_staging (
-            time TIMESTAMP,
-            temperature_2m DOUBLE,
-            precipitation DOUBLE
-        );
-    """)
-
-    # Clear staging
-    con.execute("DELETE FROM weather_staging;")
-
-    # Load CSV into staging
-    con.execute(f"""
-        INSERT INTO weather_staging
-        SELECT * FROM read_csv_auto('{csv_path}');
-    """)
-
-    # MERGE = real UPSERT
-    con.execute("""
-        MERGE INTO weather_data AS target
-        USING weather_staging AS source
-        ON target.time = source.time
-
-        WHEN MATCHED THEN
-            UPDATE SET
-                temperature_2m = source.temperature_2m,
-                precipitation = source.precipitation,
-                modified_date = CURRENT_TIMESTAMP
-
-        WHEN NOT MATCHED THEN
-            INSERT (time, temperature_2m, precipitation, creation_date, modified_date)
-            VALUES (
-                source.time,
-                source.temperature_2m,
-                source.precipitation,
-                CURRENT_TIMESTAMP,
-                CURRENT_TIMESTAMP
-            );
-    """)
-
-    print(f"UPSERT completed with MERGE. Database updated at: {db_path}")
-
-    preview_table(con, "weather_staging")
-    preview_table(con, "weather_data")
-
-    return db_path
-
+        # Ensure the connection is always closed
+        if con is not None:
+            con.close()
+            print("DuckDB connection closed.")
 
 if __name__ == "__main__":
     """
