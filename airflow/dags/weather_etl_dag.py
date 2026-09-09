@@ -49,7 +49,7 @@ def api_available():
 
     except Exception as e:
         print(f"API availability check failed: {e}")
-        raise
+        return False
 
 def extract_task(ds):
 
@@ -67,7 +67,7 @@ def extract_task(ds):
         ti.xcom_push(key="raw_data", value=raw_data)
 
     except Exception as e:
-        print(f"Load task failed: {e}")
+        print(f"Extract task failed: {e}")
         raise
     
 def transform_task():
@@ -86,7 +86,7 @@ def transform_task():
         transform(raw, filename)
 
     except Exception as e:
-        print(f"Load task failed: {e}")
+        print(f"Transform task failed: {e}")
         raise
     
 def load_task():

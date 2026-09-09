@@ -1,6 +1,7 @@
 # Architecture Overview
 
 This project implements a minimal, modular ETL pipeline orchestrated with Apache Airflow.  
+
 Its purpose is to extract weather data from a public API, transform it into a tabular format, and load it into a DuckDB database for lightweight analytics and inspection.
 
 The architecture is intentionally simple: the DAG orchestrates the workflow, while the ETL logic lives in standalone Python modules that can be executed and tested independently of Airflow.
