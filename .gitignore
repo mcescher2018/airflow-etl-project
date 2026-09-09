@@ -10,6 +10,9 @@ demo*.*
 sample*.*
 !sample_extract_output.json
 
+# Airflow config
+airflow/config/
+
 # Airflow logs
 airflow/logs/
 
