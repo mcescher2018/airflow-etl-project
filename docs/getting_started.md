@@ -221,6 +221,8 @@ For interactive SQL exploration of the DuckDB database, you can optionally use d
 duckcli weather_airflow/data/weather.duckdb
 ```
 
+Note: DuckDB uses a single-writer model. Do not open the database with duckcli while the Airflow DAG is writing to the database. Wait until the DAG run has completed before performing interactive queries or modifications.
+
 ### 7.3 ETL tests
 
 Refer to the testing section for OS, container, and observability tests.
