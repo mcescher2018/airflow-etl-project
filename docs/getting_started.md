@@ -65,9 +65,11 @@ Create your local environment file:
 cp .env.example .env
 ```
 
-Then edit `.env` with your personal values:
+Then edit `.env` with your personal or local values:
 
 ```text
+AIRFLOW_PROJ_DIR
+AIRFLOW__API__SECRET_KEY
 FERNET_KEY
 EMAIL_BACKEND (local or cloud)
 LOCAL_EMAIL_SENDER_ADDRESS
@@ -205,7 +207,7 @@ A minimal viewer (`weather_online.py`) allows inspecting DuckDB data.
 
 A simple dashboard (`weather_dashboard.py`) is dedicated to data quality and KPI.
 
-Run them from the project root with commands like this:
+Run them from the `ui` subfolder with commands like this:
 
 ```bash
 streamlit run weather_online.py
@@ -221,7 +223,7 @@ duckcli weather_airflow/data/weather.duckdb
 
 ### 7.3 ETL tests
 
-Refer to the [testing section](docs/testing/) for OS, container, and observability tests.
+Refer to the testing section for OS, container, and observability tests.
 
 ## 8. Minimal workflow
 

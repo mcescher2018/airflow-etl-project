@@ -4,7 +4,7 @@ import streamlit as st
 import numpy as np
 
 # Connect to DuckDB
-con = duckdb.connect("../airflow/data/weather.duckdb")
+con = duckdb.connect("../weather_airflow/data/weather.duckdb")
 
 # ============================================
 # Title & Latest Update info

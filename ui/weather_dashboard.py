@@ -5,7 +5,7 @@ import streamlit as st
 # ============================================
 # Configuration
 # ============================================
-DB_PATH = "../airflow/data/weather.duckdb"
+DB_PATH = "../weather_airflow/data/weather.duckdb"
 TABLE_NAME = "weather_data"
 
 # Expected DAG frequency in hours (change as needed)
