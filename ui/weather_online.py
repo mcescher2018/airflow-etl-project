@@ -3,89 +3,93 @@ import pandas as pd
 import streamlit as st
 import numpy as np
 
-# Connect to DuckDB
-con = duckdb.connect("../weather_airflow/data/weather.duckdb")
-
 # ============================================
-# Title & Latest Update info
+# Configuration
 # ============================================
+DB_PATH = "../weather_airflow/data/weather.duckdb"
+TABLE_NAME = "weather_data"
 
-# Retrieve the timestamp of the latest ETL update
-last_update = con.execute("""
-    SELECT MAX(modified_date) FROM weather_data
-""").fetchone()[0]
+with duckdb.connect(DB_PATH, read_only=True) as con:
 
-st.title("Weather Data Viewer")
-st.subheader(f"Latest update: {last_update}")
+    # ============================================
+    # Title & Latest Update info
+    # ============================================
 
-# ============================================
-# Latest Snapshot
-# ============================================
+    # Retrieve the timestamp of the latest ETL update
+    last_update = con.execute(f"""
+        SELECT MAX(modified_date) FROM {TABLE_NAME}
+    """).fetchone()[0]
 
-# Load the full 192-hour snapshot corresponding to the latest update
-# (current day + 7-day hourly forecast)
-df = con.execute(f"""
-    SELECT *
-    FROM weather_data
-    WHERE modified_date = '{last_update}'
-    ORDER BY time
-""").fetchdf()
+    st.title("Weather Data Viewer")
+    st.subheader(f"Latest update: {last_update}")
 
-# Display the latest snapshot (not the historical dataset)
-st.subheader("Latest Snapshot (192-hour window)")
-st.dataframe(df, use_container_width=True)
+    # ============================================
+    # Latest Snapshot
+    # ============================================
 
-# ============================================
-# Basic stats
-# ============================================
+    # Load the full 192-hour snapshot corresponding to the latest update
+    # (current day + 7-day hourly forecast)
+    df = con.execute(f"""
+        SELECT *
+        FROM {TABLE_NAME}
+        WHERE modified_date = '{last_update}'
+        ORDER BY time
+    """).fetchdf()
 
-# Basic summary statistics for the latest snapshot
-st.subheader("Summary Statistics")
-st.write(df[["temperature_2m", "precipitation"]].describe())
+    # Display the latest snapshot (not the historical dataset)
+    st.subheader("Latest Snapshot (192-hour window)")
+    st.dataframe(df, use_container_width=True)
 
-# ============================================
-# Temperature Trend Forecasting
-# ============================================
+    # ============================================
+    # Basic stats
+    # ============================================
 
-# Temperature trend using a simple linear regression
-st.subheader("Temperature Trend Forecasting (Linear Regression)")
+    # Basic summary statistics for the latest snapshot
+    st.subheader("Summary Statistics")
+    st.write(df[["temperature_2m", "precipitation"]].describe())
 
-# Convert time to a numeric index for regression
-df["time_index"] = np.arange(len(df))
+    # ============================================
+    # Temperature Trend Forecasting
+    # ============================================
 
-# Fit a simple linear regression model
-coeffs = np.polyfit(df["time_index"], df["temperature_2m"], 1)
-trend_line = coeffs[0] * df["time_index"] + coeffs[1]
+    # Temperature trend using a simple linear regression
+    st.subheader("Temperature Trend Forecasting (Linear Regression)")
 
-trend_df = pd.DataFrame({
-    "time": df["time"],
-    "temperature_2m": df["temperature_2m"],
-    "trend": trend_line
-}).set_index("time")
+    # Convert time to a numeric index for regression
+    df["time_index"] = np.arange(len(df))
 
-# Plot temperature and trend line
-st.line_chart(trend_df)
+    # Fit a simple linear regression model
+    coeffs = np.polyfit(df["time_index"], df["temperature_2m"], 1)
+    trend_line = coeffs[0] * df["time_index"] + coeffs[1]
 
-# ============================================
-# Precipitation Trend Forecasting
-# ============================================
+    trend_df = pd.DataFrame({
+        "time": df["time"],
+        "temperature_2m": df["temperature_2m"],
+        "trend": trend_line
+    }).set_index("time")
 
-# Precipitation trend using a simple linear regression
-st.subheader("Precipitation Trend Forecasting (Linear Regression)")
+    # Plot temperature and trend line
+    st.line_chart(trend_df)
 
-# Convert time to a numeric index for regression
-df["time_index"] = np.arange(len(df))
+    # ============================================
+    # Precipitation Trend Forecasting
+    # ============================================
 
-# Fit a simple linear regression model for precipitation
-prec_coeffs = np.polyfit(df["time_index"], df["precipitation"], 1)
-prec_trend_line = prec_coeffs[0] * df["time_index"] + prec_coeffs[1]
+    # Precipitation trend using a simple linear regression
+    st.subheader("Precipitation Trend Forecasting (Linear Regression)")
 
-prec_trend_df = pd.DataFrame({
-    "time": df["time"],
-    "precipitation": df["precipitation"],
-    "trend": prec_trend_line
-}).set_index("time")
+    # Convert time to a numeric index for regression
+    df["time_index"] = np.arange(len(df))
 
-# Plot precipitation and trend line
-st.line_chart(prec_trend_df)
+    # Fit a simple linear regression model for precipitation
+    prec_coeffs = np.polyfit(df["time_index"], df["precipitation"], 1)
+    prec_trend_line = prec_coeffs[0] * df["time_index"] + prec_coeffs[1]
 
+    prec_trend_df = pd.DataFrame({
+        "time": df["time"],
+        "precipitation": df["precipitation"],
+        "trend": prec_trend_line
+    }).set_index("time")
+
+    # Plot precipitation and trend line
+    st.line_chart(prec_trend_df)
