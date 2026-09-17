@@ -35,7 +35,7 @@ See section **Configuration** below.
 
 ### 1.3 Airflow variables file
 
-A `variables.json` file must exist in `airflow/include/`.  
+A `variables.json` file must exist in `weather_airflow/include/`.  
 
 See section **Configuration** below.
 
@@ -112,37 +112,41 @@ CLOUD_EMAIL_API_KEY
 ```
 
 ### 2.2 Airflow variables (variables.json)
+
 The repository includes a template:
 
 ```text
-airflow/include/variables.example.json
+weather_airflow/include/variables.example.json
 ```
 
 Create your local variables file:
 
 ```bash
-cp airflow/include/variables.example.json airflow/include/variables.json
+cp weather_airflow/include/variables.example.json weather_airflow/include/variables.json
 ```
 
 Edit `variables.json` with your personal settings, for example:
 
 ```json
 {
-  "etl_owner": "your_owner_name",
   "etl_alert_email": "recipient@example.com",
   "etl_alert_ok_subject": "ETL Weather - Successful run",
   "etl_alert_ko_subject": "ETL Weather - Error alert",
-  "etl_alert_template_ok_path": "/opt/airflow/include/alert_template_ok.html",
-  "etl_alert_template_ko_path": "/opt/airflow/include/alert_template_ko.html",
-  "weather_db_path": "/opt/airflow/data/weather.duckdb",
-  "weather_csv_path": "/opt/airflow/data/weather_staging.csv",
+  "etl_alert_template_ok_path": "/opt/weather_airflow/include/alert_template_ok.html",
+  "etl_alert_template_ko_path": "/opt/weather_airflow/include/alert_template_ko.html",
+  "weather_db_path": "/opt/weather_airflow/data/weather.duckdb",
+  "weather_csv_path": "/opt/weather_airflow/data/weather_staging.csv",
   "weather_api_url" : "https://api.open-meteo.com/v1/forecast",
-  "latitude" : 45.00,
-  "longitude" : 11.00
+  "forced_api_sensor_failure" : "false",
+  "forced_extract_failure" : "false",
+  "forced_transform_failure" : "false",
+  "forced_load_failure" : "false",
+  "latitude" : 1.29,
+  "longitude" : 103.85
 }
 ```
 
-These values are used by the DAG for notifications and weather API configuration.
+These values are used by the DAG for notifications, simulate failures (see testing section) and weather API configuration.
 
 ## 3. Start Airflow
 
@@ -171,7 +175,7 @@ Import the variables into the Airflow instance:
 
 ```bash
 docker exec -it airflow-etl-project-airflow-apiserver-1 \
-  airflow variables import /opt/airflow/include/variables.json
+  airflow variables import /opt/weather_airflow/include/variables.json
 ```
 
 This loads all required configuration values (paths, email settings, coordinates, etc.).
@@ -212,7 +216,7 @@ streamlit run weather_online.py
 For interactive SQL exploration of the DuckDB database, you can optionally use duckcli:
 
 ```bash
-duckcli airflow/data/weather.duckdb
+duckcli weather_airflow/data/weather.duckdb
 ```
 
 ### 7.3 ETL tests

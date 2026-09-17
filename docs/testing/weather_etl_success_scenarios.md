@@ -1,13 +1,11 @@
-# Weather ETL DAG Test Report
+# Weather ETL DAG — Tasks Success Scenarios
 
-The `weather_etl_dag` is a fully operational ETL workflow designed to extract weather data from an external API, transform it into a structured format, and load it into a DuckDB database for downstream analysis and dashboard visualization.
+This document presents the results of the tests performed on this DAG and verify the absence of errors operating in standard conditions.
 
-This DAG serves as the core functional pipeline of the project, validating not only Airflow’s scheduling and task‑execution capabilities but also the correctness of the ETL logic, branching behavior, data persistence, and email‑based notifications.
-
-This document presents the results of the tests performed on this DAG.
 Given the complexity of the workflow, all three testing layers — OS testing, container testing, and observability testing — have been applied.
 
 Below are the screenshots collected during the various tests.
+
 Comments are included only where necessary.
 
 ---
@@ -85,23 +83,7 @@ The detailed log of each task is shown in the subsections below.
 
 ### 3.3.1 Api Sensor
 
-### 3.3.1.1 Current scenario: api sensor successful
-
-![Api Sensor](../../screenshots/observability_testing/weather_etl_dag/05a_weather_etl_single_run_task_api_sensor.png)
-
-### 3.3.1.2 What happens if sensor fails
-
-With the base DAG settings, the API sensor fails after 10 failed pokes. 
-
-If the API URL does not respond correctly within 5 minutes (`timeout`=300), the task fails, as shown in the example below:
-
-![Api Sensor Error](../../screenshots/observability_testing/weather_etl_dag/05b_weather_etl_single_run_task_api_sensor_error.png)
-
-The failure causes the entire pipeline to stop and triggers the KO notification email:
-
-![Api Sensor Downstream Errors](../../screenshots/observability_testing/weather_etl_dag/05c_weather_etl_single_run_task_api_sensor_downstream_errors.png)
-
-You can also note that the failure was intentionally triggered by inserting an invalid URL into the Airflow Variables. This allows testing the sensor’s behavior under controlled error conditions and verifying that the timeout mechanism and downstream KO handling work as expected.
+![Api Sensor](../../screenshots/observability_testing/weather_etl_dag/05_weather_etl_single_run_task_api_sensor.png)
 
 ### 3.3.2 Extract
 

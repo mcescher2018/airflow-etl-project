@@ -1,6 +1,6 @@
 from unittest.mock import patch, MagicMock
-from airflow.etl.extract import extract
-from airflow.etl_test.utils import get_today_str
+from weather_airflow.etl.extract import extract
+from weather_airflow.etl_test.utils import get_today_str
 
 today_str = get_today_str()
 api_url = "https://api.open-meteo.com/v1/forecast?latitude=44.50&longitude=11.34&hourly=temperature_2m,precipitation"

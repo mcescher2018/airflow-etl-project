@@ -11,21 +11,21 @@ sample*.*
 !sample_extract_output.json
 
 # Airflow config
-airflow/config/
+weather_airflow/config/
 
 # Airflow logs
-airflow/logs/
+weather_airflow/logs/
 
 # Airflow dags_dev
-airflow/dags_dev/
+weather_airflow/dags_dev/
 
 # Configuration files with private values
 variables.json
 .env
 
 # Airflow local data (staging CSV, DuckDB, temp files)
-airflow/data/*.csv
-airflow/data/*.duckdb
+weather_airflow/data/*.csv
+weather_airflow/data/*.duckdb
 
 # Docker artifacts
 *.pid

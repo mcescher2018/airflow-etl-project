@@ -20,16 +20,16 @@ As first, enter the worker container:
 docker exec -it airflow-etl-project-airflow-worker-1 bash
 ```
 
-Then run single modules or trigger the whole DAG.
+Then run single modules or validate the whole DAG.
 
 ## 2 Run single modules
 
 ```bash
-python /opt/airflow/etl/extract.py 2026-09-01 "https://api.open-meteo.com/v1/forecast?latitude=44.50&longitude=11.34&hourly=temperature_2m,precipitation"
-python /opt/airflow/etl/transform.py /opt/airflow/etl_test/sample_extract_output.json /opt/airflow/etl_test/sample_transform_output.csv
-python /opt/airflow/etl/load.py /opt/airflow/etl_test/sample_transform_output.csv /opt/airflow/etl_test/sample_db.duckdb
-python /opt/airflow/etl/email_local.py "Subject" "<p>Hello</p>" "your_destination_address@example.com"
-python /opt/airflow/etl/email_cloud.py "Subject" "<p>Hello</p>" "your_destination_address@example.com"
+python /opt/weather_airflow/etl/extract.py 2026-09-01 "https://api.open-meteo.com/v1/forecast?latitude=44.50&longitude=11.34&hourly=temperature_2m,precipitation"
+python /opt/weather_airflow/etl/transform.py /opt/weather_airflow/etl_test/sample_extract_output.json /opt/weather_airflow/etl_test/sample_transform_output.csv
+python /opt/weather_airflow/etl/load.py /opt/weather_airflow/etl_test/sample_transform_output.csv /opt/weather_airflow/etl_test/sample_db.duckdb
+python /opt/weather_airflow/etl/email_local.py "Subject" "<p>Hello</p>" "your_destination_address@example.com"
+python /opt/weather_airflow/etl/email_cloud.py "Subject" "<p>Hello</p>" "your_destination_address@example.com"
 ```
 
 Note: Inside Docker, MailHog is already available as:
@@ -40,36 +40,20 @@ mailhog:1025
 
 ## 3 Validate the DAG
 
+Before moving a DAG (for example `weather_etl_dag.py`) from `dags_dev` to `dags`, is important to perform the following preliminar test.
+
 Enter the scheduler container:
 
 ```bash
 docker exec -it airflow-etl-project-airflow-scheduler-1 bash
 ```
 
-Before moving a DAG (for example `weather_etl_dag.py`) from `dags_dev` to `dags`, run two validation steps.
-
-### 3.1 Validate Python syntax
-
-This checks pure Python syntax (indentation, missing parentheses, typos).
-
-It does not import Airflow modules or execute the DAG.
+Then run:
 
 ```bash
-python -c "import dags_dev.weather_etl_dag"
+python -m py_compile /opt/weather_airflow/dags_dev/weather_etl_dag.py
 ```
 
-If the command returns no output, the file is syntactically valid.
+This checks pure Python syntax (indentation, missing parentheses, typos) and should give no output messages.
 
-### 3.2 Validate DAG importability
-
-This simulates what Airflow does when loading a DAG.
-
-It imports the module, resolves all imports, and builds the DAG object.
-
-```bash
-python -m py_compile /opt/airflow/dags_dev/weather_etl_dag.py
-```
-
-If the command returns no output, the DAG is importable and safe to move into `dags/`.
-
-If errors appear, fix them while the DAG is still in `dags_dev` to avoid breaking the scheduler.
+Note: It does not import Airflow modules or execute the DAG, it is possible only from the UI (see observability documents).

@@ -17,7 +17,7 @@ airflow-etl-project/
 Start **MailHog** from the project root:
 
 ```bash
-./mailhog
+./bin/mailhog
 ```
 
 MailHog runs on:
@@ -47,9 +47,9 @@ Input and outputs are samples but no method is mocked.
 To test main ETL functions use the followings commands, based on sample input and output files stored in airflow/etl_test/:
 
 ```bash
-python airflow/etl/extract.py 2026-09-01 "https://api.open-meteo.com/v1/forecast?latitude=44.50&longitude=11.34&hourly=temperature_2m,precipitation"
-python airflow/etl/transform.py airflow/etl_test/sample_extract_output.json airflow/etl_test/sample_transform_output.csv
-python airflow/etl/load.py airflow/etl_test/sample_transform_output.csv airflow/etl_test/sample_db.duckdb
+python weather_airflow/etl/extract.py 2026-09-01 "https://api.open-meteo.com/v1/forecast?latitude=44.50&longitude=11.34&hourly=temperature_2m,precipitation"
+python weather_airflow/etl/transform.py weather_airflow/etl_test/sample_extract_output.json weather_airflow/etl_test/sample_transform_output.csv
+python weather_airflow/etl/load.py weather_airflow/etl_test/sample_transform_output.csv weather_airflow/etl_test/sample_db.duckdb
 ```
 
 ### 2.2 Local Email Backend
@@ -60,7 +60,7 @@ Use this command:
 
 ```bash
 export EMAIL_BACKEND=local
-python airflow/etl/email_local.py "Subject" "<p>Hello</p>" "your_destination_address@example.com"
+python weather_airflow/etl/email_local.py "Subject" "<p>Hello</p>" "your_destination_address@example.com"
 ```
 
 After sending the command, check on your local MailHog if you see the email.
@@ -73,7 +73,7 @@ Use this command:
 
 ```bash
 export EMAIL_BACKEND=cloud
-python airflow/etl/email_cloud.py "Subject" "<p>Hello</p>" "your_destination_address@example.com"
+python weather_airflow/etl/email_cloud.py "Subject" "<p>Hello</p>" "your_destination_address@example.com"
 ```
 
 After sending the command, check on your MailGun dashboard if you see the email.
@@ -88,17 +88,17 @@ Useful for limit cases and to avoid regressions with future developments.
 Commands for single unit tests:
 
 ```bash
-pytest airflow/etl_test/test_extract.py -vv
-pytest airflow/etl_test/test_transform.py -vv
-pytest airflow/etl_test/test_load.py -vv
-pytest airflow/etl_test/test_email_local.py -vv
-pytest airflow/etl_test/test_email_cloud.py -vv
+pytest weather_airflow/etl_test/test_extract.py -vv
+pytest weather_airflow/etl_test/test_transform.py -vv
+pytest weather_airflow/etl_test/test_load.py -vv
+pytest weather_airflow/etl_test/test_email_local.py -vv
+pytest weather_airflow/etl_test/test_email_cloud.py -vv
 ```
 
 To run all unit tests, use this command:
 
 ```bash
-pytest airflow/etl_test/ -vv
+pytest weather_airflow/etl_test/ -vv
 ```
 
 MailHog is **not required** here: SMTP calls are mocked.

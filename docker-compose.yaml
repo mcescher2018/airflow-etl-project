@@ -55,6 +55,8 @@ x-airflow-common:
     - ${ENV_FILE_PATH:-.env}
   environment:
     &airflow-common-env
+    AIRFLOW_HOME: /opt/airflow
+    AIRFLOW__CORE__DAGS_FOLDER: /opt/weather_airflow/dags
     AIRFLOW__CORE__EXECUTOR: CeleryExecutor
     AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
@@ -62,10 +64,10 @@ x-airflow-common:
     AIRFLOW__CELERY__BROKER_URL: redis://redis:6379/0
     AIRFLOW__CORE__FERNET_KEY: ${FERNET_KEY}
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
-    AIRFLOW__CORE__LOAD_EXAMPLES: 'true'
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
     AIRFLOW__CORE__EXECUTION_API_SERVER_URL: 'http://airflow-apiserver:8080/execution/'
-    PYTHONPATH: /opt/airflow:/opt/airflow/etl
-    AIRFLOW__CORE__PLUGINS_FOLDER: /opt/airflow/plugins
+    PYTHONPATH: /opt/weather_airflow
+    AIRFLOW__CORE__PLUGINS_FOLDER: /opt/weather_airflow/plugins
     AIRFLOW__API_AUTH__JWT_SECRET: ${AIRFLOW__API_AUTH__JWT_SECRET:-airflow_jwt_secret}
     AIRFLOW__API_AUTH__JWT_ISSUER: ${AIRFLOW__API_AUTH__JWT_ISSUER:-airflow}
     # yamllint disable rule:line-length
@@ -78,17 +80,18 @@ x-airflow-common:
     #_PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
     _PIP_ADDITIONAL_REQUIREMENTS: duckdb pandas requests
     # The following line can be used to set a custom config file, stored in the local config folder
-    AIRFLOW_CONFIG: '/opt/airflow/config/airflow.cfg'
+    AIRFLOW_CONFIG: '/opt/weather_airflow/config/airflow.cfg'
   volumes:
-    - ${AIRFLOW_PROJ_DIR:-./airflow}/dags:/opt/airflow/dags
-    - ${AIRFLOW_PROJ_DIR:-./airflow}/dags_dev:/opt/airflow/dags_dev
-    - ${AIRFLOW_PROJ_DIR:-./airflow}/data:/opt/airflow/data
-    - ${AIRFLOW_PROJ_DIR:-./airflow}/etl:/opt/airflow/etl
-    - ${AIRFLOW_PROJ_DIR:-./airflow}/etl_test:/opt/airflow/etl_test
-    - ${AIRFLOW_PROJ_DIR:-./airflow}/logs:/opt/airflow/logs
-    - ${AIRFLOW_PROJ_DIR:-./airflow}/config:/opt/airflow/config
-    - ${AIRFLOW_PROJ_DIR:-./airflow}/plugins:/opt/airflow/plugins
-    - ${AIRFLOW_PROJ_DIR:-./airflow}/include:/opt/airflow/include
+    - ${AIRFLOW_PROJ_DIR}:/opt/weather_airflow
+    - ${AIRFLOW_PROJ_DIR}/dags:/opt/weather_airflow/dags
+    - ${AIRFLOW_PROJ_DIR}/dags_dev:/opt/weather_airflow/dags_dev
+    - ${AIRFLOW_PROJ_DIR}/data:/opt/weather_airflow/data
+    - ${AIRFLOW_PROJ_DIR}/etl:/opt/weather_airflow/etl
+    - ${AIRFLOW_PROJ_DIR}/etl_test:/opt/weather_airflow/etl_test
+    - ${AIRFLOW_PROJ_DIR}/logs:/opt/weather_airflow/logs
+    - ${AIRFLOW_PROJ_DIR}/config:/opt/weather_airflow/config
+    - ${AIRFLOW_PROJ_DIR}/plugins:/opt/weather_airflow/plugins
+    - ${AIRFLOW_PROJ_DIR}/include:/opt/weather_airflow/include
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     &airflow-common-depends-on
@@ -180,15 +183,16 @@ services:
       airflow-init:
         condition: service_completed_successfully
     volumes:
-      - ${AIRFLOW_PROJ_DIR:-./airflow}/dags:/opt/airflow/dags
-      - ${AIRFLOW_PROJ_DIR:-./airflow}/dags_dev:/opt/airflow/dags_dev
-      - ${AIRFLOW_PROJ_DIR:-./airflow}/data:/opt/airflow/data
-      - ${AIRFLOW_PROJ_DIR:-./airflow}/logs:/opt/airflow/logs
-      - ${AIRFLOW_PROJ_DIR:-./airflow}/config:/opt/airflow/config
-      - ${AIRFLOW_PROJ_DIR:-./airflow}/plugins:/opt/airflow/plugins
-      - ${AIRFLOW_PROJ_DIR:-./airflow}/etl:/opt/airflow/etl
-      - ${AIRFLOW_PROJ_DIR:-./airflow}/etl_test:/opt/airflow/etl_test
-      - ${AIRFLOW_PROJ_DIR:-./airflow}/include:/opt/airflow/include
+      - ${AIRFLOW_PROJ_DIR}:/opt/weather_airflow
+      - ${AIRFLOW_PROJ_DIR}/dags:/opt/weather_airflow/dags
+      - ${AIRFLOW_PROJ_DIR}/dags_dev:/opt/weather_airflow/dags_dev
+      - ${AIRFLOW_PROJ_DIR}/data:/opt/weather_airflow/data
+      - ${AIRFLOW_PROJ_DIR}/logs:/opt/weather_airflow/logs
+      - ${AIRFLOW_PROJ_DIR}/config:/opt/weather_airflow/config
+      - ${AIRFLOW_PROJ_DIR}/plugins:/opt/weather_airflow/plugins
+      - ${AIRFLOW_PROJ_DIR}/etl:/opt/weather_airflow/etl
+      - ${AIRFLOW_PROJ_DIR}/etl_test:/opt/weather_airflow/etl_test
+      - ${AIRFLOW_PROJ_DIR}/include:/opt/weather_airflow/include
 
   airflow-worker:
     <<: *airflow-common

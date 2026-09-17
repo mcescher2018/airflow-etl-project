@@ -31,9 +31,19 @@ def build_api_url():
 
     return f"{api_url}?latitude={latitude}&longitude={longitude}&hourly=temperature_2m,precipitation"
 
+def check_force_fail(caller_name):
+
+    var_name = f"forced_{caller_name}_failure"
+    
+    if Variable.get(var_name, "false") == "true":
+        raise Exception(f"Simulated failure in {caller_name}")
+
 def api_available():
 
     try:
+        # Simulated failure (if enabled)
+        check_force_fail("api_sensor")
+
         # Build the API URL from configuration
         url = build_api_url()
 
@@ -53,10 +63,14 @@ def api_available():
 
 def extract_task(ds):
 
-    context = get_current_context()
-    ti = context["ti"]
-
     try:
+        # Simulated failure (if enabled)
+        check_force_fail("extract")
+
+        # Get context
+        context = get_current_context()
+        ti = context["ti"]
+
         # Read full_url from airflow varables
         full_url = build_api_url()
         
@@ -72,10 +86,14 @@ def extract_task(ds):
     
 def transform_task():
 
-    context = get_current_context()
-    ti = context["ti"]
-
     try:
+        # Simulated failure (if enabled)
+        check_force_fail("transform")
+
+        # Get context
+        context = get_current_context()
+        ti = context["ti"]
+        
         # Read CSV filename from Variables
         filename = Variable.get("weather_csv_path")
     
@@ -92,6 +110,9 @@ def transform_task():
 def load_task():
 
     try:
+        # Simulated failure (if enabled)
+        check_force_fail("load")
+
         # Read DB filename from Variables
         db_path = Variable.get("weather_db_path")
     
@@ -105,13 +126,21 @@ def load_task():
         print(f"Load task failed: {e}")
         raise
     
-def send_alert_email_task(template_path, subject):
-
-    context = get_current_context()
-    send_email = choose_email_backend()
+def send_alert_email_task(scenario):
 
     try:
+        # Get context (for renderer)
+        context = get_current_context()
+
+        send_email = choose_email_backend()
         alert_email = Variable.get("etl_alert_email")
+        
+        if (scenario=="ok"):
+            template_path = Variable.get("etl_alert_template_ok_path")
+            subject =  Variable.get("etl_alert_ok_subject")
+        else:
+            template_path = Variable.get("etl_alert_template_ko_path")
+            subject =  Variable.get("etl_alert_ko_subject")
 
         with open(template_path) as f:
             raw_html = f.read()
@@ -131,10 +160,10 @@ def send_alert_email_task(template_path, subject):
         raise
 
 default_args = {
-    "owner": Variable.get("etl_owner"),
-    "retries": 3,
-    "retry_delay": timedelta(minutes=15),
-    "retry_exponential_backoff": True
+    "owner": "weather_etl",
+    "retries": 2,
+    "retry_delay": timedelta(minutes=5),
+    "retry_exponential_backoff": False
 }
 
 with DAG(
@@ -170,20 +199,14 @@ with DAG(
     send_alert_email_ok_op = PythonOperator(
         task_id="send_alert_email_ok_task",
         python_callable=send_alert_email_task,
-        op_kwargs={
-            "template_path": Variable.get("etl_alert_template_ok_path"),
-            "subject": Variable.get("etl_alert_ok_subject"),
-        },
+        op_kwargs={"scenario": "ok"},
         trigger_rule="all_success",
     )
 
     send_alert_email_ko_op = PythonOperator(
         task_id="send_alert_email_ko_task",
         python_callable=send_alert_email_task,
-        op_kwargs={
-            "template_path": Variable.get("etl_alert_template_ko_path"),
-            "subject": Variable.get("etl_alert_ko_subject"),
-        },
+        op_kwargs={"scenario": "ko"},
         trigger_rule="one_failed"
     )
 

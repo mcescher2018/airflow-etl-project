@@ -23,11 +23,17 @@ Additional reliability and observability features include:
 - branching logic for success/failure notifications  
 - structured logs visible in the Airflow UI  
 
+Implementation note: 
+
+Airflow passes the execution date (`ds`) to the extract step for logging and reproducibility.
+
+The extractor **does not filter** the forecast by this value: it always retrieves the standard rolling window returned by the API.
+
 ---
 
 ## 2. Airflow Layout
 
-The `airflow/` directory contains all components required by Airflow, plus development and testing support:
+The `weather_airflow/` directory contains all components required by Airflow, plus development and testing support:
 
 - `dags/` — production DAGs  
 - `dags_dev/` — development DAGs  
@@ -38,7 +44,15 @@ The `airflow/` directory contains all components required by Airflow, plus devel
 - `logs/` — Airflow execution logs  
 - `config/` and `plugins/` — optional configuration and extensions  
 
-Inside the container, this directory is mounted at `/opt/airflow`.
+Inside the container, this directory is mounted at `/opt/weather_airflow`.
+
+Container Image Note:  
+
+The project uses `PIP_ADDITIONAL_REQUIREMENTS` to install extra Python packages at container startup.
+
+While a custom Airflow image is generally cleaner for production, Airflow 3.3 does not support extending the official image via Dockerfile.
+
+This approach is therefore intentional and aligned with the constraints of the 3.3 distribution.
 
 ---
 

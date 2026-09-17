@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import patch, MagicMock
-from airflow.etl.email_cloud import send_email
+from weather_airflow.etl.email_cloud import send_email
 
 def test_email_cloud_success():
     """

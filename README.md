@@ -16,7 +16,7 @@ This is the project structure, showing how the main components are organized wit
 
 ```text
 .
-├── airflow
+├── weather_airflow
 │   ├── config
 │   ├── dags
 │   ├── dags_dev
@@ -52,10 +52,14 @@ Testing in this project is organized into three complementary layers, each targe
 - [Container Testing](docs/testing/container_testing.md) — verifies modules and DAG behavior inside the Airflow Docker environment.
 - [Observability Guidelines](docs/testing/observability_testing_guidelines.md) — provides instructions for inspecting DAG runs, logs, KPIs, and data outputs through the Airflow UI and dashboards.
 
-In addition to these guidelines, full test reports are available for each DAG:
+In addition to these guidelines, full test reports are available. 
 
-- [Hello World DAG Test Report](docs/testing/hello_world_dag_testing.md)
-- [Weather ETL DAG Test Report](docs/testing/weather_etl_testing.md)
+For `hello_world_dag.py` we have a simple document where only observability tests in case of success are reported: [Hello World DAG Test Report](docs/testing/hello_world_dag_testing.md).
+
+For the more complex `weather_etl_dag.py` we have two distinct reports:
+
+- [Weather ETL DAG Success Scenarios](docs/testing/weather_etl_success_scenarios.md) — performs tests at the three levels and gets no error as expected.
+- [Weather ETL DAG Failure Scenarios](docs/testing/weather_etl_failure_scenarios.md) — intentionally triggers failures and checks whether the system manages errors as expected. Only applied to the observability testing layer.
 
 These documents include screenshots, execution traces, and detailed results across all three testing layers.
 

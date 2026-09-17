@@ -1,6 +1,6 @@
 import pandas as pd
-from airflow.etl.transform import transform
-from airflow.etl_test.utils import get_today_str
+from weather_airflow.etl.transform import transform
+from weather_airflow.etl_test.utils import get_today_str
 
 today_str = get_today_str()
 

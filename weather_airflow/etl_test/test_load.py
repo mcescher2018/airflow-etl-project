@@ -1,7 +1,7 @@
 import duckdb
 import pandas as pd
-from airflow.etl.load import load
-from airflow.etl_test.utils import get_today_str
+from weather_airflow.etl.load import load
+from weather_airflow.etl_test.utils import get_today_str
 
 today_str = get_today_str()
 
